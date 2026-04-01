@@ -1,6 +1,6 @@
 // src/metrics.rs
-use prometheus::{register_counter, register_histogram_vec, Counter, HistogramVec};
 use lazy_static::lazy_static;
+use prometheus::{register_counter, register_histogram_vec, Counter, HistogramVec};
 
 lazy_static! {
     // Jumlah request mengikut method, endpoint, status
@@ -16,4 +16,3 @@ lazy_static! {
         &["method", "endpoint", "status"]
     ).unwrap();
 }
-

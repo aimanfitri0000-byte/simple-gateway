@@ -1,17 +1,15 @@
 // src/middleware.rs
+use crate::auth::verify_token;
 use axum::{
+    body::Body,
     http::{Request, StatusCode},
     middleware::Next,
     response::Response,
-    body::Body,
 };
-use crate::auth::verify_token;
 
-pub async fn auth_middleware(
-    mut req: Request<Body>,
-    next: Next,
-) -> Result<Response, StatusCode> {
-    let auth_header = req.headers()
+pub async fn auth_middleware(mut req: Request<Body>, next: Next) -> Result<Response, StatusCode> {
+    let auth_header = req
+        .headers()
         .get("Authorization")
         .ok_or(StatusCode::UNAUTHORIZED)?;
 

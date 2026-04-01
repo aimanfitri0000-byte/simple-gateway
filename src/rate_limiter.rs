@@ -6,10 +6,8 @@ use axum::{
     response::Response,
 };
 use governor::{
-    RateLimiter, Quota,
-    clock::QuantaClock,
-    state::keyed::DashMapStateStore,
-    middleware::NoOpMiddleware,
+    clock::QuantaClock, middleware::NoOpMiddleware, state::keyed::DashMapStateStore, Quota,
+    RateLimiter,
 };
 use lazy_static::lazy_static;
 use std::net::IpAddr;
@@ -32,11 +30,7 @@ lazy_static! {
     };
 }
 
-pub async fn rate_limit_middleware(
-    req: Request<Body>,
-    next: Next,
-) -> Result<Response, StatusCode> {
-
+pub async fn rate_limit_middleware(req: Request<Body>, next: Next) -> Result<Response, StatusCode> {
     // Ambil IP
     let ip = req
         .extensions()

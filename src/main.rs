@@ -2,34 +2,36 @@
 
 // src/main.rs
 use axum::{
-    Router, routing::get, routing::post, response::{Json, IntoResponse}, extract::State,
+    extract::State,
     http::StatusCode,
+    response::{IntoResponse, Json},
+    routing::get,
+    routing::post,
+    Router,
 };
-use std::net::SocketAddr;
-use serde_json::{json, Value};
-use tokio::net::TcpListener;
-use reqwest::Client;
-use std::sync::Arc;
 use prometheus::{Encoder, TextEncoder};
+use reqwest::Client;
+use serde_json::{json, Value};
+use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::net::TcpListener;
 use tracing_subscriber::{fmt, EnvFilter};
 
 mod auth;
+mod consul_discovery;
+mod logging;
+mod metrics;
 mod middleware;
 mod rate_limiter;
-mod metrics;
-mod logging;
 mod service_registry;
-mod consul_discovery;
 
-use service_registry::{LoadBalancingStrategy, REGISTRY};
 use consul_discovery::discover_services;
+use service_registry::{LoadBalancingStrategy, REGISTRY};
 
 #[tokio::main]
 async fn main() {
     // Inisialisasi logging & tracing
-    fmt()
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+    fmt().with_env_filter(EnvFilter::from_default_env()).init();
 
     let client = Arc::new(Client::new());
 
@@ -65,7 +67,9 @@ async fn main() {
         .route("/metrics", get(metrics_handler))
         .nest("/", protected_routes)
         .layer(axum::middleware::from_fn(logging::logging_middleware))
-        .layer(axum::middleware::from_fn(rate_limiter::rate_limit_middleware))
+        .layer(axum::middleware::from_fn(
+            rate_limiter::rate_limit_middleware,
+        ))
         .with_state(client);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -102,9 +106,7 @@ async fn login(Json(payload): Json<LoginRequest>) -> impl IntoResponse {
     }
 }
 
-async fn get_users(
-    State(client): State<Arc<Client>>,
-) -> Result<Json<Value>, StatusCode> {
+async fn get_users(State(client): State<Arc<Client>>) -> Result<Json<Value>, StatusCode> {
     let mut registry = REGISTRY.lock().await;
     let instance = registry.select_instance("users", LoadBalancingStrategy::RoundRobin);
     drop(registry);
@@ -117,7 +119,10 @@ async fn get_users(
     let url = format!("{}/users", instance.url);
     match client.get(&url).send().await {
         Ok(resp) => {
-            let data = resp.json::<Value>().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            let data = resp
+                .json::<Value>()
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
             Ok(Json(data))
         }
         Err(_) => Err(StatusCode::SERVICE_UNAVAILABLE),
@@ -131,4 +136,3 @@ async fn metrics_handler() -> String {
     encoder.encode(&metric_families, &mut buffer).unwrap();
     String::from_utf8(buffer).unwrap()
 }
-

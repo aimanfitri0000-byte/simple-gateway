@@ -1,0 +1,25 @@
+# clippy.toml
+# Konfigurasi yang sah untuk Clippy
+
+# Tahap maksimum untuk cognitive complexity lint
+cognitive-complexity-threshold = 25
+
+# Maksimum jumlah baris untuk terlalu panjang
+too-many-lines-threshold = 1000
+
+# Maksimum jumlah argumen fungsi
+too-many-arguments-threshold = 10
+
+# Maksimum kedalaman struct untuk lint large_stack_arrays
+stack-size-threshold = 512
+
+# Maksimum saiz struct yang dihantar mengikut nilai (bytes)
+pass-by-value-size-limit = 256
+
+# Kumpulan lint yang diabaikan
+allow-unwrap-in-tests = true
+allow-dbg-in-tests = true
+allow-expect-in-tests = true
+allow-print-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-panic-in-tests = true

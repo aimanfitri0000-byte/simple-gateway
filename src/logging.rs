@@ -6,12 +6,9 @@ use axum::{
     response::Response,
 };
 use std::time::Instant;
-use tracing::{info, warn, error, span, Level};
+use tracing::{error, info, span, warn, Level};
 
-pub async fn logging_middleware(
-    req: Request<Body>,
-    next: Next,
-) -> Response {
+pub async fn logging_middleware(req: Request<Body>, next: Next) -> Response {
     let method = req.method().clone();
     let path = req.uri().path().to_owned();
     let start = Instant::now();
@@ -32,29 +29,16 @@ pub async fn logging_middleware(
             "{} {} - {} - {:?} - rate limited",
             method, path, status, duration
         ),
-        s if s.is_client_error() => warn!(
-            "{} {} - {} - {:?}",
-            method, path, status, duration
-        ),
-        s if s.is_server_error() => error!(
-            "{} {} - {} - {:?}",
-            method, path, status, duration
-        ),
-        _ => info!(
-            "{} {} - {} - {:?}",
-            method, path, status, duration
-        ),
+        s if s.is_client_error() => warn!("{} {} - {} - {:?}", method, path, status, duration),
+        s if s.is_server_error() => error!("{} {} - {} - {:?}", method, path, status, duration),
+        _ => info!("{} {} - {} - {:?}", method, path, status, duration),
     }
 
     // Rekod metrics
     use crate::metrics::{REQUESTS, REQUEST_DURATION};
     REQUESTS.inc();
     REQUEST_DURATION
-        .with_label_values(&[
-            method.as_str(),
-            &path,
-            status.as_str(),
-        ])
+        .with_label_values(&[method.as_str(), &path, status.as_str()])
         .observe(duration.as_secs_f64());
 
     response

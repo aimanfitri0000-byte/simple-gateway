@@ -1,13 +1,13 @@
 // src/auth/mod.rs
-use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
-use serde::{Serialize, Deserialize};
-use chrono::{Utc, Duration};
 use bcrypt::{hash, verify, DEFAULT_COST};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
 
 const JWT_SECRET: &[u8] = b"your-secret-key-change-in-production";
 
-#[derive(Debug, Serialize, Deserialize, Clone)]   // ← Clone diperlukan
+#[derive(Debug, Serialize, Deserialize, Clone)] // ← Clone diperlukan
 pub struct Claims {
     pub sub: String,
     pub exp: usize,
@@ -42,9 +42,7 @@ pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> 
 lazy_static! {
     static ref USERS: Vec<(String, String)> = {
         let hash = hash("password123", DEFAULT_COST).unwrap();
-        vec![
-            ("alice".to_string(), hash),
-        ]
+        vec![("alice".to_string(), hash)]
     };
 }
 

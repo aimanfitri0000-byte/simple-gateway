@@ -23,10 +23,7 @@ pub async fn discover_services(
 
     for entry in entries {
         // Gunakan &[] sebagai fallback (static)
-        let checks = entry["Checks"]
-    .as_array()
-    .map(Vec::as_slice)
-    .unwrap_or(&[]);
+        let checks = entry["Checks"].as_array().map(Vec::as_slice).unwrap_or(&[]);
         let healthy = checks.iter().all(|c| c["Status"] == "passing");
         if !healthy {
             continue;

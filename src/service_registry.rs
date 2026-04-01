@@ -1,9 +1,9 @@
 // src/service_registry.rs
+use lazy_static::lazy_static;
+use rand::seq::SliceRandom;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use lazy_static::lazy_static;
-use rand::seq::SliceRandom; // untuk Random strategy
+use tokio::sync::Mutex; // untuk Random strategy
 
 #[derive(Debug, Clone)]
 pub struct ServiceInstance {
@@ -67,12 +67,10 @@ impl ServiceRegistry {
                 let mut rng = rand::thread_rng();
                 healthy.choose(&mut rng).map(|&i| i.clone())
             }
-            LoadBalancingStrategy::LeastConnections => {
-                healthy
-                    .iter()
-                    .min_by_key(|i| i.connections)
-                    .map(|&i| i.clone())
-            }
+            LoadBalancingStrategy::LeastConnections => healthy
+                .iter()
+                .min_by_key(|i| i.connections)
+                .map(|&i| i.clone()),
         }
     }
 
@@ -89,5 +87,6 @@ impl ServiceRegistry {
 }
 
 lazy_static! {
-    pub static ref REGISTRY: Arc<Mutex<ServiceRegistry>> = Arc::new(Mutex::new(ServiceRegistry::new()));
+    pub static ref REGISTRY: Arc<Mutex<ServiceRegistry>> =
+        Arc::new(Mutex::new(ServiceRegistry::new()));
 }

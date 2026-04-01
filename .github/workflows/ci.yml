@@ -7,27 +7,65 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-    runs-on: windows-latest
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    # Python linting & formatting
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Python dev dependencies
+      run: |
+        pip install black flake8
+    
+    - name: Run Black (check formatting)
+      run: black --check *.py
+    
+    - name: Run Flake8 (linting)
+      run: flake8 *.py --max-line-length=88 --ignore=E203,W503
+    
+    # Rust linting & formatting
+    - name: Install Rust
+      run: |
+        rustup update stable
+        rustup default stable
+        rustup component add clippy rustfmt
+    
+    - name: Check Rust formatting
+      run: cargo fmt -- --check
+    
+    - name: Run Clippy (linting)
+      run: cargo clippy -- -D warnings
 
+  build:
+    name: Build & Test
+    runs-on: windows-latest
+    needs: lint  # hanya jalan jika lint lulus
+    
     steps:
     - uses: actions/checkout@v4
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        override: true
+      run: |
+        rustup update stable
+        rustup default stable
 
     - name: Cache cargo registry
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
 
     - name: Build
       run: cargo build --release
