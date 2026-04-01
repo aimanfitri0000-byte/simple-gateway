@@ -5,8 +5,8 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use governor::{RateLimiter, Quota, clock::DefaultClock};
 use governor::state::keyed::DashMapStateStore;
+use governor::{clock::DefaultClock, Quota, RateLimiter};
 use lazy_static::lazy_static;
 use std::net::IpAddr;
 use std::num::NonZeroU32;
@@ -20,10 +20,7 @@ lazy_static! {
     };
 }
 
-pub async fn rate_limit_middleware(
-    req: Request<Body>,
-    next: Next,
-) -> Result<Response, StatusCode> {
+pub async fn rate_limit_middleware(req: Request<Body>, next: Next) -> Result<Response, StatusCode> {
     // Dapatkan IP dari request
     let ip = req
         .extensions()
@@ -55,7 +52,7 @@ mod tests {
     #[test]
     fn test_rate_limiter_allows_requests_within_limit() {
         let ip = IpAddr::from_str("127.0.0.1").unwrap();
-        
+
         for _ in 0..10 {
             let result = RATE_LIMITER.check_key(&ip);
             assert!(result.is_ok());
@@ -65,11 +62,11 @@ mod tests {
     #[test]
     fn test_rate_limiter_blocks_after_limit() {
         let ip = IpAddr::from_str("192.168.1.1").unwrap();
-        
+
         for _ in 0..10 {
             let _ = RATE_LIMITER.check_key(&ip);
         }
-        
+
         let result = RATE_LIMITER.check_key(&ip);
         assert!(result.is_err());
     }
@@ -78,14 +75,14 @@ mod tests {
     fn test_rate_limiter_different_ips_separate() {
         let ip1 = IpAddr::from_str("10.0.0.1").unwrap();
         let ip2 = IpAddr::from_str("10.0.0.2").unwrap();
-        
+
         for _ in 0..10 {
             let _ = RATE_LIMITER.check_key(&ip1);
         }
-        
+
         let result = RATE_LIMITER.check_key(&ip2);
         assert!(result.is_ok());
-        
+
         let result = RATE_LIMITER.check_key(&ip1);
         assert!(result.is_err());
     }
