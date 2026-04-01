@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // src/main.rs
 use axum::{
     Router, routing::get, routing::post, response::{Json, IntoResponse}, extract::State,
@@ -129,4 +131,4 @@ async fn metrics_handler() -> String {
     encoder.encode(&metric_families, &mut buffer).unwrap();
     String::from_utf8(buffer).unwrap()
 }
-#![allow(dead_code)]
+
