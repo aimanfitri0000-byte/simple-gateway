@@ -54,3 +54,49 @@ pub fn authenticate(username: &str, password: &str) -> Option<String> {
     }
     None
 }
+// src/auth/mod.rs (tambah di hujung fail, sebelum penutup terakhir)
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_token() {
+        let token = generate_token("alice");
+        assert!(!token.is_empty());
+        assert_eq!(token.split('.').count(), 3);
+    }
+
+    #[test]
+    fn test_verify_valid_token() {
+        let token = generate_token("bob");
+        let claims = verify_token(&token).unwrap();
+        assert_eq!(claims.sub, "bob");
+    }
+
+    #[test]
+    fn test_verify_invalid_token() {
+        let result = verify_token("invalid.token.here");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_authenticate_valid() {
+        let result = authenticate("alice", "password123");
+        assert!(result.is_some());
+        let token = result.unwrap();
+        assert!(!token.is_empty());
+    }
+
+    #[test]
+    fn test_authenticate_invalid_password() {
+        let result = authenticate("alice", "wrong");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_authenticate_nonexistent_user() {
+        let result = authenticate("unknown", "password123");
+        assert!(result.is_none());
+    }
+}
