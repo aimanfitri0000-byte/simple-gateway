@@ -1,0 +1,47 @@
+gateway:
+  port: 3000
+  timeout_seconds: 30
+  max_body_size_mb: 10
+
+services:
+  users:
+    name: users-service
+    discovery_type: Static
+    load_balancing: RoundRobin
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 60
+      half_open_requests: 3
+    endpoints:
+      - path: /api/v1/users/*
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        upstream_path: /api/users
+        auth_required: true
+        rate_limit_key: user_id
+
+  products:
+    name: products-service
+    discovery_type: Consul
+    load_balancing: LeastConnections
+    circuit_breaker:
+      failure_threshold: 3
+      timeout_seconds: 30
+      half_open_requests: 2
+    endpoints:
+      - path: /api/v1/products/*
+        methods: ["GET", "POST"]
+        upstream_path: /api/products
+        auth_required: false
+        rate_limit_key: ip
+
+auth:
+  jwt_secret: "your-secret-key-change-in-production"
+  jwt_expiration_hours: 24
+
+rate_limits:
+  user_id:
+    requests_per_second: 100
+    burst_size: 200
+  ip:
+    requests_per_second: 50
+    burst_size: 100

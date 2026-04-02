@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  gateway-rust:
+    build:
+      context: ./api-gateway-rust
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - RUST_LOG=info
+      - JWT_SECRET=your-secret-key
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - consul
+      - redis
+
+  gateway-python:
+    build:
+      context: ./api-gateway-python
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+      - "9090:9090"
+    environment:
+      - JWT_SECRET=your-secret-key
+      - OTLP_ENDPOINT=http://jaeger:4317
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - consul
+      - redis
+
+  consul:
+    image: consul:1.15
+    ports:
+      - "8500:8500"
+    command: agent -dev -client=0.0.0.0
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+
+  example-service:
+    image: hashicorp/http-echo
+    command: ["-text", "Hello from user service"]
+    ports:
+      - "8080:8080"
